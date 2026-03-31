@@ -1,0 +1,36 @@
+# Compilação e Build
+/target/
+!.mvn/wrapper/maven-wrapper.jar
+/build/
+
+# IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+
+# Eclipse
+.metadata/
+bin/
+tmp/
+*.tmp
+*.bak
+*.swp
+*~
+.settings/
+.classpath
+.project
+.factorypath
+
+# VS Code
+.vscode/
+
+# Arquivos de Sistema e Logs
+*.log
+.DS_Store
+Thumbs.db
+
+# Configurações sensíveis (IMPORTANTE se você criar um .env depois)
+.env
+application-local.properties
