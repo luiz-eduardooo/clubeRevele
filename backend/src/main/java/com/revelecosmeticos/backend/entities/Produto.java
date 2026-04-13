@@ -1,12 +1,9 @@
 package com.revelecosmeticos.backend.entities;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Data;
-import java.math.BigDecimal;
+import org.hibernate.annotations.JdbcTypeCode;
+import java.sql.Types;
 import java.util.UUID;
 
 @Entity
@@ -15,33 +12,43 @@ import java.util.UUID;
 public class Produto {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID) // Mantendo o padrão UUID que você escolheu!
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @JdbcTypeCode(java.sql.Types.VARCHAR)
     private UUID id;
 
-    @NotBlank(message = "O nome do produto é obrigatório")
-    @Column(nullable = false)
+    @Column(name = "nome", nullable = false, length = 150)
     private String nome;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "descricao", columnDefinition = "TEXT")
     private String descricao;
 
+    @Column(name = "imagem_url")
     private String imagemUrl;
 
-    @NotNull(message = "O preço normal é obrigatório")
-    @PositiveOrZero(message = "O preço não pode ser negativo")
-    @Column(nullable = false)
-    private BigDecimal precoNormal;
+    @Column(name = "preco_base", nullable = false)
+    private Double precoBase;
 
-    @NotNull(message = "O preço do clube é obrigatório")
-    @PositiveOrZero(message = "O preço do clube não pode ser negativo")
-    @Column(nullable = false)
-    private BigDecimal precoClube;
+    @Column(name = "em_promocao_clube", nullable = false)
+    private Boolean emPromocaoClube = false;
 
-    @NotNull(message = "A quantidade em estoque é obrigatória")
-    @Min(value = 0, message = "O estoque não pode ser negativo")
-    @Column(nullable = false)
-    private Integer estoque;
+    @Column(name = "desconto_clube_padrao")
+    private Double descontoClubePadrao = 0.15; // 15% fixo inicial
 
-    @Column(nullable = false)
+    @Column(name = "desconto_especial")
+    private Double descontoEspecial = 0.0;
+
+    @Column(name = "estoque", nullable = false)
+    private Integer estoque = 0;
+
+    @Column(name = "ativo")
     private Boolean ativo = true;
+
+    // Métodos de conveniência (não vão para o banco)
+    @Transient
+    public Double getPrecoComDesconto() {
+        if (!emPromocaoClube) return precoBase;
+
+        double taxaDesconto = (descontoEspecial > 0) ? descontoEspecial : descontoClubePadrao;
+        return precoBase * (1 - taxaDesconto);
+    }
 }

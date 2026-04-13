@@ -1,9 +1,12 @@
 package com.revelecosmeticos.backend.controllers;
 
 
+import com.revelecosmeticos.backend.dtos.ProdutoDTO;
 import com.revelecosmeticos.backend.entities.Produto;
 import com.revelecosmeticos.backend.repository.ProductRepository;
 import jakarta.validation.Valid;
+import org.apache.coyote.Response;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,9 +24,13 @@ public class ProductController {
     private ProductRepository repository;
 
     @PostMapping
-    public ResponseEntity<Produto> cadastrarProduto(@RequestBody @Valid Produto produto) {
-        Produto novoProduto = repository.save(produto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(novoProduto);
+    public ResponseEntity<Produto> cadastrarProduto(@RequestBody @Valid ProdutoDTO dto) {
+        Produto produto = new Produto();
+        BeanUtils.copyProperties(dto, produto);
+        if(produto.getAtivo() == null) produto.setAtivo(true);
+        if(produto.getEmPromocaoClube() == null) produto.setEmPromocaoClube(false);
+        if(produto.getDescontoEspecial() == null) produto.setDescontoEspecial(0.0);
+        return ResponseEntity.status(HttpStatus.CREATED).body(repository.save(produto));
     }
 
     @GetMapping
@@ -31,28 +38,18 @@ public class ProductController {
         return ResponseEntity.ok(repository.findAll());
     }
 
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Produto> atualizarProduto(@RequestBody @Valid ProdutoDTO dto, @PathVariable UUID id){
+        Produto produto = repository.findById(id).orElseThrow(()->new RuntimeException("Produto não encontrado!"));
+        BeanUtils.copyProperties(dto, produto, "id");
+        return ResponseEntity.ok(repository.save(produto));
+    }
     // Rota para BUSCAR um produto específico pelo ID
     @GetMapping("/{id}")
     public ResponseEntity<Produto> buscarPorId(@PathVariable UUID id) {
         return repository.findById(id)
                 .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<Produto> atualizarProduto(@PathVariable UUID id, @RequestBody @Valid Produto produtoAtualizado) {
-        return repository.findById(id)
-                .map(produtoExistente -> {
-                    produtoExistente.setNome(produtoAtualizado.getNome());
-                    produtoExistente.setDescricao(produtoAtualizado.getDescricao());
-                    produtoExistente.setPrecoNormal(produtoAtualizado.getPrecoNormal());
-                    produtoExistente.setPrecoClube(produtoAtualizado.getPrecoClube());
-                    produtoExistente.setEstoque(produtoAtualizado.getEstoque());
-                    produtoExistente.setImagemUrl(produtoAtualizado.getImagemUrl());
-                    produtoExistente.setAtivo(produtoAtualizado.getAtivo());
-                    Produto salvo = repository.save(produtoExistente);
-                    return ResponseEntity.ok(salvo);
-                })
                 .orElse(ResponseEntity.notFound().build());
     }
 
@@ -64,4 +61,37 @@ public class ProductController {
         }
         return ResponseEntity.notFound().build();
     }
+
+    @PutMapping("/{id}/ativarClubeProduto")
+    public ResponseEntity<Produto> ativarClube(UUID id){
+        return repository.findById(id).map((produto)-> {
+            produto.setEmPromocaoClube(true);
+            return ResponseEntity.ok(repository.save(produto));
+        }).orElse(ResponseEntity.notFound().build());
+    }
+
+    @PutMapping("/{id}/adicionarDescontoEspecial")
+    public ResponseEntity<Produto> adicionarDesconto(UUID id, double desconto){
+        return repository.findById(id).map((produto)->{
+            produto.setDescontoEspecial(desconto);
+            return ResponseEntity.ok(repository.save(produto));
+        }).orElse(ResponseEntity.notFound().build());
+    }
+
+    @PutMapping("/atualizarPrecosGlobais")
+    public ResponseEntity<Void> adicionarDescontoGlobal(double desconto){
+        repository.atualizarDescontoGlobal(desconto);
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/{id}/atualizarDescontoClube")
+    public ResponseEntity<Produto> atualizarDescontoClube(UUID id, double desconto){
+        return repository.findById(id).map((produto)->{
+            produto.setDescontoClubePadrao(desconto);
+            return ResponseEntity.ok(repository.save(produto));
+        }).orElse(ResponseEntity.notFound().build());
+    }
+
+
+
 }

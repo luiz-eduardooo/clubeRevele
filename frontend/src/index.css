@@ -1,0 +1,9 @@
+@import "tailwindcss";
+@theme {
+  /* Criando a paleta de cores "revele" baseada na sua logo */
+  --color-revele-900: #2b1124; /* O vinho escuro do fundo da logo */
+  --color-revele-600: #8c4c6f; /* Um tom intermediário para botões no hover */
+  --color-revele-500: #bd7396; /* Um tom mais claro para botões normais */
+  --color-revele-100: #fdf5f8; /* Um fundo bem clarinho puxado pro rosê */
+  --color-revele-gold: #e8c9b9; /* A cor champanhe da letra da logo */
+}
